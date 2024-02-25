@@ -21,6 +21,7 @@ public class Genre
 {
     public long Id { get; set; }
     public string Name { get; set; }
+    public List<GenreLink> Links { get; set; }
 }
 public class GenreLink
 {

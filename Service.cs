@@ -10,19 +10,21 @@ public class Service
 
     public async Task SetFavoriteGenres()
     {
-        var users = _context.Set<User>().Include(u => u.History).ToList();
-        var genreLinks = _context.Set<GenreLink>().ToList();
+        var users = _context.Set<User>().ToList();
+        var allListenings = _context.Set<Listening>().ToList();
+        var genres = _context.Set<Genre>().Include(g => g.Links).ToList();
         foreach (var user in users)
         {
-            var genres = user.History
-                .SelectMany(h => genreLinks.Where(gl => gl.AuthorId == h.Id))
-                .GroupBy(g => g.GenreId)
+            var userListenings = allListenings.Where(l => l.UserId == user.Id);
+            var topGenreIds = userListenings
+                .SelectMany(h => genres.Where(g => g.Links.Any(l => l.AuthorId == h.AuthorId)))
+                .GroupBy(g => g.Id)
                 .OrderByDescending(group => group.Count())
                 .Take(3)
                 .Select(group => group.Key)
                 .ToList();
 
-            user.FavoriteGenres = _context.Set<Genre>().Where(g => genres.Contains(g.Id)).ToList();
+            user.FavoriteGenres = _context.Set<Genre>().Where(g => topGenreIds.Contains(g.Id)).ToList();
 
             await _context.SaveChangesAsync();
         }
